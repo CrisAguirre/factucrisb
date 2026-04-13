@@ -1,11 +1,16 @@
 const Factura = require('../models/Factura');
+const Counter = require('../models/Counter');
 
 // Crear una nueva factura
 exports.createFactura = async (req, res) => {
   try {
-    // Calcular el consecutivo automático
-    const lastFactura = await Factura.findOne().sort({ orden_ingreso: -1 });
-    const nextOrden = lastFactura && lastFactura.orden_ingreso ? lastFactura.orden_ingreso + 1 : 1;
+    // Calcular el consecutivo automático usando un contador independiente
+    const counter = await Counter.findOneAndUpdate(
+      { id: 'factura_orden' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    const nextOrden = counter.seq;
     
     // Asignar el nuevo consecutivo, ignorando si viene en req.body
     const datosFactura = { ...req.body, orden_ingreso: nextOrden };
